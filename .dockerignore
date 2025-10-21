@@ -1,0 +1,16 @@
+.idea
+.venv
+__pycache__/
+
+.env
+
+.git
+.github
+.gitignore
+
+Dockerfile
+.dockerignore
+
+Makefile
+README.md
+

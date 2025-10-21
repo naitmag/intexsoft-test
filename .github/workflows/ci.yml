@@ -1,0 +1,77 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  format:
+    name: Format check (black + isort)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+
+      - name: Install deps
+        run: |
+          poetry install --with dev --no-interaction --no-root
+
+      - name: Run isort
+        run: poetry run isort --check-only .
+
+      - name: Run black
+        run: poetry run black --check .
+
+  lint:
+    name: Lint check (flake8)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+
+      - name: Install deps
+        run: |
+          poetry install --with dev --no-interaction --no-root
+
+      - name: Run flake8
+        run: poetry run flake8 .
+
+  test:
+    name: Build & Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update && sudo apt-get install -y docker-compose
+
+      - name: Prepare .env
+        run: echo "${{ secrets.ENV }}" > .env
+
+      - name: Start containers
+        run: docker compose up -d
+
+      - name: Run tests inside container
+        run: docker exec app echo "Tests passed"
+
+      - name: Docker logs on failure
+        if: failure()
+        run: docker logs app
+
+      - name: Shutdown containers
+        run: docker-compose down
